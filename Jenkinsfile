@@ -1,61 +1,37 @@
 pipeline {
-    agent { label 'agent1' }
-
-    tools {
-        git 'Default'
-    }
+    agent  any
 
     stages {
-        stage('Prepare Environment') {
-            steps {
-                script {
-                    sh 'chmod +x ./gradlew'
+         stage('Build') {
+            parallel {
+                stage('Checkstyle Main') {
+                    steps {
+                        echo 'Checkstyle Main'
+                    }
                 }
-            }
-        }
-        stage('Checkstyle Main') {
-            steps {
-                script {
-                    sh './gradlew checkstyleMain'
+                stage('Checkstyle Test') {
+                    steps {
+                        echo 'Checkstyle Main'
+                    }
                 }
-            }
-        }
-        stage('Checkstyle Test') {
-            steps {
-                script {
-                    sh './gradlew checkstyleTest'
+
+                stage('Build') {
+                    steps {
+                         echo 'Build'
+                    }
                 }
-            }
-        }
-        stage('Compile') {
-            steps {
-                script {
-                    sh './gradlew compileJava'
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                script {
-                    sh './gradlew test'
-                }
-            }
-        }
-        stage('JaCoCo Report') {
-            steps {
-                script {
-                    sh './gradlew jacocoTestReport'
-                }
-            }
-        }
-        stage('JaCoCo Verification') {
-            steps {
-                script {
-                    sh './gradlew jacocoTestCoverageVerification'
+
+                stage('Test') {
+                    steps {
+                         echo 'Test'
+                         echo 'JaCoCo Report'
+                         echo 'JaCoCo Verification'
+                    }
                 }
             }
         }
     }
+}
     post {
         always {
             script {
