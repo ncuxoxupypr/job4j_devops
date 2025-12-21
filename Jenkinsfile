@@ -1,44 +1,69 @@
 pipeline {
-    agent any
+    agent { label 'agent1' }
+
+    tools {
+        git 'Default'
+    }
 
     stages {
-
-        stage('Build') {
-            parallel {
-
-                stage('Checkstyle Main') {
-                    steps {
-                        echo 'Checkstyle Main'
-                        sh './gradlew checkstyleMain'
-                    }
-                }
-
-                stage('Checkstyle Test') {
-                    steps {
-                        echo 'Checkstyle Test'
-                        sh './gradlew checkstyleTest'
-                    }
-                }
-
-                stage('Build') {
-                    steps {
-                        echo 'Build'
-                        sh './gradlew compileJava'
-                    }
+        stage('Prepare Environment') {
+            steps {
+                script {
+                    sh 'chmod +x ./gradlew'
                 }
             }
         }
-
+        stage('Checkstyle Main') {
+            steps {
+                script {
+                    sh './gradlew checkstyleMain'
+                }
+            }
+        }
+        stage('Checkstyle Test') {
+            steps {
+                script {
+                    sh './gradlew checkstyleTest'
+                }
+            }
+        }
+        stage('Compile') {
+            steps {
+                script {
+                    sh './gradlew compileJava'
+                }
+            }
+        }
         stage('Test') {
             steps {
-                echo 'Test'
-                sh './gradlew test'
-
-                echo 'JaCoCo Report'
-                sh './gradlew jacocoTestReport'
-
-                echo 'JaCoCo Verification'
-                sh './gradlew jacocoTestCoverageVerification'
+                script {
+                    sh './gradlew test'
+                }
+            }
+        }
+        stage('JaCoCo Report') {
+            steps {
+                script {
+                    sh './gradlew jacocoTestReport'
+                }
+            }
+        }
+        stage('JaCoCo Verification') {
+            steps {
+                script {
+                    sh './gradlew jacocoTestCoverageVerification'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                def buildInfo = "Build number: ${currentBuild.number}\n" +
+                                "Build status: ${currentBuild.currentResult}\n" +
+                                "Started at: ${new Date(currentBuild.startTimeInMillis)}\n" +
+                                "Duration so far: ${currentBuild.durationString}"
+                telegramSend(message: buildInfo)
             }
         }
     }
