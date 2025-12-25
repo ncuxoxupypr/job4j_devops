@@ -8,61 +8,45 @@ pipeline {
     stages {
         stage('Prepare Environment') {
             steps {
-                script {
-                    sh 'chmod +x ./gradlew'
+                sh 'chmod +x ./gradlew'
+            }
+        }
+        stage('Build') {
+            parallel {
+                stage('Checkstyle Main') {
+                    steps {
+                        sh './gradlew checkstyleMain'
+                    }
+                }
+                stage('Checkstyle Test') {
+                    steps {
+                        sh './gradlew checkstyleTest'
+                    }
+                }
+                stage('Compile') {
+                    steps {
+                        sh './gradlew compileJava'
+                    }
                 }
             }
         }
-        stage('Checkstyle Main') {
+        stage('Test & Coverage') {
             steps {
-                script {
-                    sh './gradlew checkstyleMain'
-                }
-            }
-        }
-        stage('Checkstyle Test') {
-            steps {
-                script {
-                    sh './gradlew checkstyleTest'
-                }
-            }
-        }
-        stage('Compile') {
-            steps {
-                script {
-                    sh './gradlew compileJava'
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                script {
-                    sh './gradlew test'
-                }
-            }
-        }
-        stage('JaCoCo Report') {
-            steps {
-                script {
-                    sh './gradlew jacocoTestReport'
-                }
-            }
-        }
-        stage('JaCoCo Verification') {
-            steps {
-                script {
-                    sh './gradlew jacocoTestCoverageVerification'
-                }
+                sh './gradlew test'
+                sh './gradlew jacocoTestReport'
+                sh './gradlew jacocoTestCoverageVerification'
             }
         }
     }
     post {
         always {
             script {
-                def buildInfo = "Build number: ${currentBuild.number}\n" +
-                                "Build status: ${currentBuild.currentResult}\n" +
-                                "Started at: ${new Date(currentBuild.startTimeInMillis)}\n" +
-                                "Duration so far: ${currentBuild.durationString}"
+                def buildInfo =
+                        "Build number: ${currentBuild.number}\n" +
+                        "Build status: ${currentBuild.currentResult}\n" +
+                        "Started at: ${new Date(currentBuild.startTimeInMillis)}\n" +
+                        "Duration so far: ${currentBuild.durationString}"
+
                 telegramSend(message: buildInfo)
             }
         }
